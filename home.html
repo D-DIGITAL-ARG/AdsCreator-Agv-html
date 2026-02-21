@@ -1,230 +1,417 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Ad Generator AI | Futuristic Ad Studio</title>
 
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Tailwind CSS CDN with plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;700;900&family=Inter:wght@400;600;900&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
 
-    <link rel="stylesheet" href="stylehome.css">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#0a0b14',
+                        'card-bg': '#141624',
+                        'neon-cyan': '#00d2ff',
+                        'neon-pink': '#ff0080',
+                        'input-bg': '#1a1d30',
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#0a0b14",
+                    },
+                    backgroundImage: {
+                        'gradient-primary': 'linear-gradient(90deg, #00d2ff 0%, #ff0080 100%)',
+                        'gradient-card': 'radial-gradient(circle at top right, rgba(255, 0, 128, 0.2), transparent), radial-gradient(circle at bottom left, rgba(0, 210, 255, 0.2), transparent)',
+                    },
+                    fontFamily: {
+                        "sans": ["Public Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+            }
+        }
+
+        .animate-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #00d2ff, #ff0080);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glow-cyan {
+            background: radial-gradient(circle at center, rgba(0, 210, 255, 0.15) 0%, transparent 70%);
+        }
+
+        .glow-pink {
+            background: radial-gradient(circle at center, rgba(255, 0, 128, 0.15) 0%, transparent 70%);
+        }
+
+        .pulse-ring-pink {
+            box-shadow: 0 0 0 0 rgba(255, 0, 128, 0.4);
+            animation: pulse-pink 2s infinite;
+        }
+
+        @keyframes pulse-pink {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 0, 128, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 0, 128, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 0, 128, 0);
+            }
+        }
+
+        .ad-card-overlay {
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 50%);
+        }
+
+        /* Custom stage handling */
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 
-<body class="bg-dark-bg text-white font-sans selection:bg-neon-cyan/30">
+<body class="bg-dark-bg text-white font-sans min-h-screen selection:bg-neon-cyan/30">
+    <!-- Background Glow Effects -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] glow-cyan pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] glow-pink pointer-events-none"></div>
 
-    <!-- Header -->
-    <header class="main-header">
-        <div class="header-left">
-            <div class="profile-icon">
-                <span class="material-symbols-outlined">account_circle</span>
-            </div>
-        </div>
-
-        <div class="logo">
+    <!-- MainHeader -->
+    <header
+        class="w-full py-6 px-8 border-b border-gray-800 flex items-center bg-dark-bg/80 backdrop-blur-md sticky top-0 z-50 justify-center">
+        <div class="text-2xl font-black tracking-widest uppercase cursor-pointer" onclick="location.reload()">
             AD <span class="text-neon-cyan">GENERATOR</span>
-        </div>
-
-        <div class="header-right">
-            <button class="settings-btn">
-                <span class="material-symbols-outlined">settings</span>
-            </button>
         </div>
     </header>
 
-    <main class="container">
-        <!-- Input Stage -->
-        <section id="stage-input" class="stage active">
-            <div class="hero">
-                <div class="badge">Estudio Creativo con IA</div>
-                <h1 class="hero-title">
-                    Convierte tu sitio web en <br>
-                    <span class="gradient-text animate-glow">anuncios efectivos</span>
+    <main class="max-w-7xl mx-auto px-4 py-12 flex flex-col items-center">
+
+        <!-- STAGE: INPUT -->
+        <section id="stage-input" class="stage active w-full flex flex-col items-center">
+            <!-- HeroSection -->
+            <div class="text-center mb-16 max-w-4xl">
+                <h1 class="text-6xl md:text-8xl font-extrabold mb-6 leading-tight">Genera desde tu sitio web <br />
+                    <span class="gradient-text animate-glow">Anuncios de alta conversión</span>
                 </h1>
-                <p class="hero-subtitle">
-                    Pega la URL de tu producto o página de destino para generar
-                    <span class="text-white"> activos creativos</span> en segundos.
-                </p>
             </div>
 
-            <div class="url-input-container">
-                <form id="url-form" class="url-form">
-                    <div class="input-wrapper">
-                        <span class="material-symbols-outlined input-icon">link</span>
-                        <input type="url" id="website-url" placeholder="https://tu-tienda.com/producto" required>
-                        <button type="submit" id="submit-btn" class="generate-btn">
-                            <span class="btn-text">Generar Anuncios</span>
-                            <span class="material-symbols-outlined">auto_awesome</span>
+            <!-- ConversionForm -->
+            <form id="url-form" class="w-full max-w-3xl mb-12">
+                <label class="block text-neon-cyan text-xs font-bold tracking-widest uppercase mb-4 ml-2">INGRESA LA URL
+                    DEL SITIO WEB</label>
+                <div class="relative group">
+                    <input id="website-url"
+                        class="w-full bg-input-bg border-2 border-gray-800 focus:border-neon-cyan rounded-2xl py-6 px-8 text-xl outline-none transition-all placeholder:text-gray-600"
+                        placeholder="https://yourwebsite.com" type="url" required />
+                </div>
+                <div class="flex flex-col items-center gap-6 mt-8">
+                    <button type="submit" id="submit-btn"
+                        class="w-full bg-gradient-primary rounded-2xl py-6 flex items-center justify-center gap-4 text-2xl font-black hover:scale-105 transition-all shadow-xl shadow-neon-cyan/20 max-w-xs">
+                        <span class="material-symbols-outlined text-3xl">auto_awesome</span>
+                        Generar
+                    </button>
+                    <!-- Platforms -->
+                    <div id="platform-selectors" class="flex items-center gap-6 mt-2">
+                        <button type="button" data-platform="instagram"
+                            class="platform-btn w-12 h-12 rounded-full border-2 border-neon-cyan flex items-center justify-center cursor-pointer hover:bg-neon-cyan/10 transition-colors bg-neon-cyan/20">
+                            <svg class="w-6 h-6 text-neon-cyan" fill="currentColor" viewbox="0 0 24 24">
+                                <path
+                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.332 3.608 1.308.975.975 1.245 2.242 1.308 3.607.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.063 1.365-.333 2.632-1.308 3.607-.975.975-2.242 1.246-3.607 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.332-3.608-1.308-.975-.975-1.245-2.242-1.308-3.607-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.062-1.366.332-2.633 1.308-3.608.975-.975 2.242-1.245 3.607-1.308 1.266-.058 1.646-.07 4.85-.07zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.353 2.612 6.765 6.973 6.965 1.28.058 1.688.072 4.947.072s3.667-.014 4.947-.072c4.351-.2 6.765-2.612 6.965-6.973.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.351-2.612-6.765-6.973-6.965C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z">
+                                </path>
+                            </svg>
+                        </button>
+                        <button type="button" data-platform="facebook"
+                            class="platform-btn w-12 h-12 rounded-full border-2 border-neon-pink flex items-center justify-center cursor-pointer hover:bg-neon-pink/10 transition-colors bg-neon-pink/20">
+                            <svg class="w-6 h-6 text-neon-pink" fill="currentColor" viewbox="0 0 24 24">
+                                <path
+                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                                </path>
+                            </svg>
                         </button>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
 
-            <div class="platforms">
-                <h3 class="platform-title">Seleccionar Plataformas</h3>
-                <div class="platform-grid">
-                    <button class="platform-card active">
-                        <span class="material-symbols-outlined">photo_camera</span>
-                        <span class="platform-name">Instagram</span>
-                    </button>
-                    <button class="platform-card active">
-                        <span class="material-symbols-outlined">facebook</span>
-                        <span class="platform-name">Facebook</span>
-                    </button>
+            <!-- VisualCard -->
+            <div class="w-full max-w-5xl relative mb-16">
+                <div
+                    class="aspect-video w-full rounded-3xl bg-card-bg border border-gray-800 flex flex-col items-center justify-center p-12 text-center bg-gradient-card overflow-hidden">
+                    <div class="mb-8 relative h-24 w-24">
+                        <svg class="w-16 h-16 text-white absolute top-0 left-0" fill="currentColor" viewbox="0 0 24 24">
+                            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"></path>
+                        </svg>
+                        <svg class="w-8 h-8 text-white absolute bottom-0 right-0 animate-pulse" fill="currentColor"
+                            viewbox="0 0 24 24">
+                            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"></path>
+                        </svg>
+                        <svg class="w-6 h-6 text-white absolute top-1/2 right-0 opacity-60" fill="currentColor"
+                            viewbox="0 0 24 24">
+                            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-medium max-w-2xl leading-relaxed text-gray-200">AD GENERATOR
+                        analizará el contenido y diseño del sitio y generará anuncios creativos automáticamente con
+                        imagen en formato 1:1 + copy persuasivo.</p>
                 </div>
             </div>
 
-            <div class="visual-promo">
-                <div class="promo-card">
-                    <div class="promo-icon">
-                        <span class="material-symbols-outlined">auto_awesome</span>
+            <!-- Manual Input Fallback -->
+            <div id="manual-input-container"
+                class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 hidden">
+                <div class="glass-card max-w-2xl w-full rounded-2xl p-8 shadow-2xl relative shadow-neon-cyan/20">
+                    <button id="close-manual-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white"><span
+                            class="material-symbols-outlined">close</span></button>
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined text-neon-cyan text-3xl">edit_document</span>
+                        <h3 class="text-2xl font-bold">Análisis Manual</h3>
                     </div>
-                    <p class="promo-text">
-                        Nuestra IA analizará tu contenido y <br>
-                        <span class="text-white font-bold">generará activos creativos</span> automáticamente.
+                    <p class="text-gray-400 mb-6">Si el scraper no puede acceder al sitio, ingresa los detalles aquí.
                     </p>
-                </div>
-            </div>
-
-            <!-- Manual Input Fallback (Hidden by default) -->
-            <div id="manual-input-container" class="manual-input-container hidden">
-                <div class="manual-input-card">
-                    <div class="manual-input-header">
-                        <span class="material-symbols-outlined text-neon-cyan">edit_document</span>
-                        <h3>Análisis Manual</h3>
-                        <button type="button" id="close-manual-btn" class="close-btn">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                    <p class="manual-input-desc">Si el scraper no puede acceder al sitio, pega aquí el texto principal y
-                        opcionalmente una URL de imagen de tu producto.</p>
                     <input type="url" id="manual-image-url" placeholder="URL de imagen del producto (Opcional)"
-                        class="manual-input-field">
+                        class="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-4 outline-none focus:border-neon-cyan transition-all" />
                     <textarea id="manual-text"
-                        placeholder="Pega aquí beneficios, descripción del producto, nombre de la marca..."></textarea>
-                    <button type="button" id="submit-manual-btn" class="manual-submit-btn">
-                        <span>Analizar Texto Manualmente</span>
-                        <span class="material-symbols-outlined">send</span>
-                    </button>
+                        placeholder="Pega aquí beneficios, descripción del producto, nombre de la marca..."
+                        class="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-8 h-48 outline-none focus:border-neon-cyan transition-all resize-none"></textarea>
+                    <button id="submit-manual-btn"
+                        class="w-full bg-neon-cyan text-black font-bold py-4 rounded-xl hover:scale-[1.02] transition-all">Analizar
+                        Texto Manualmente</button>
                 </div>
             </div>
         </section>
 
-        <!-- Generating Stage -->
-        <section id="stage-generating" class="stage">
-            <div class="progress-container">
-                <div class="progress-header">
-                    <h2 class="progress-title">Diseñando tu campaña</h2>
-                    <p class="progress-subtitle">La IA está analizando tu contenido y creando anuncios visuales...</p>
-                </div>
+        <!-- STAGE: GENERATING -->
+        <section id="stage-generating" class="stage w-full flex flex-col items-center">
+            <div class="max-w-2xl w-full text-center mb-10">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Estamos preparando tus anuncios</h1>
+            </div>
+            <!-- Progress Central Card -->
+            <div class="max-w-xl w-full glass-card rounded-2xl p-8 md:p-10 shadow-2xl relative overflow-hidden">
+                <!-- Decorative Progress Glow Bar -->
+                <div id="progress-indicator"
+                    class="absolute top-0 left-0 h-1 bg-gradient-to-r from-neon-cyan to-neon-pink transition-all duration-500"
+                    style="width: 0%"></div>
 
-                <div class="steps-container">
-                    <div class="step" data-step="0">
-                        <div class="step-icon"><span class="material-symbols-outlined">search</span></div>
-                        <div class="step-info">
-                            <div class="step-label">Análisis de Sitio</div>
-                            <div class="step-status">Esperando...</div>
-                        </div>
+                <div class="flex justify-between items-end mb-8">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs font-bold tracking-widest uppercase text-neon-cyan">Estado del
+                            Proceso</span>
+                        <h3 id="current-step-label" class="text-xl font-semibold">Iniciando...</h3>
                     </div>
-                    <div class="step" data-step="1">
-                        <div class="step-icon"><span class="material-symbols-outlined">psychology</span></div>
-                        <div class="step-info">
-                            <div class="step-label">Estrategia de Marca</div>
-                            <div class="step-status">Esperando...</div>
-                        </div>
-                    </div>
-                    <div class="step" data-step="2">
-                        <div class="step-icon"><span class="material-symbols-outlined">edit_note</span></div>
-                        <div class="step-info">
-                            <div class="step-label">Copywriting Persuasivo</div>
-                            <div class="step-status">Esperando...</div>
-                        </div>
-                    </div>
-                    <div class="step" data-step="3">
-                        <div class="step-icon"><span class="material-symbols-outlined">palette</span></div>
-                        <div class="step-info">
-                            <div class="step-label">Visual Studio</div>
-                            <div class="step-status">Esperando...</div>
-                        </div>
+                    <div class="text-right">
+                        <span id="progress-percentage" class="text-3xl font-bold text-white">0%</span>
                     </div>
                 </div>
 
-                <div class="loader-line">
-                    <div id="progress-bar" class="progress-fill"></div>
+                <!-- Main Progress Bar -->
+                <div class="w-full h-3 bg-white/5 rounded-full overflow-hidden mb-12">
+                    <div id="progress-bar" class="h-full transition-all duration-1000 bg-neon-cyan"
+                        style="width: 0%; box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);"></div>
+                </div>
+
+                <!-- Step List -->
+                <div class="flex flex-col gap-6">
+                    <!-- Step 1 -->
+                    <div class="step-item flex items-center gap-5" data-step="0">
+                        <div
+                            class="step-icon-status flex-shrink-0 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-xl">search</span></div>
+                        <div class="flex-grow">
+                            <p class="font-medium text-slate-300">Analizando contenido del sitio</p>
+                            <p class="step-state text-xs uppercase font-semibold tracking-wider text-gray-500">
+                                Esperando...</p>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="step-item flex items-center gap-5" data-step="1">
+                        <div
+                            class="step-icon-status flex-shrink-0 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-xl">psychology</span></div>
+                        <div class="flex-grow">
+                            <p class="font-medium text-slate-300">Estrategia de Marca</p>
+                            <p class="step-state text-xs uppercase font-semibold tracking-wider text-gray-500">
+                                Esperando...</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="step-item flex items-center gap-5" data-step="2">
+                        <div
+                            class="step-icon-status flex-shrink-0 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-xl">edit_note</span></div>
+                        <div class="flex-grow">
+                            <p class="font-medium text-slate-300">Copywriting Persuasivo</p>
+                            <p class="step-state text-xs uppercase font-semibold tracking-wider text-gray-500">
+                                Esperando...</p>
+                        </div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="step-item flex items-center gap-5" data-step="3">
+                        <div
+                            class="step-icon-status flex-shrink-0 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-xl">palette</span></div>
+                        <div class="flex-grow">
+                            <p class="font-medium text-slate-300">Visual Studio</p>
+                            <p class="step-state text-xs uppercase font-semibold tracking-wider text-gray-500">
+                                Esperando...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <p class="mt-8 text-slate-500 italic flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">info</span>
+                El proceso suele tardar entre 30 y 60 segundos
+            </p>
         </section>
 
-        <!-- Results Stage -->
-        <section id="stage-results" class="stage">
-            <div class="results-header">
+        <!-- STAGE: RESULTS -->
+        <section id="stage-results" class="stage w-full">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                 <div>
-                    <h2 class="results-title">Tus Activos Creativos</h2>
-                    <p id="results-url-display" class="results-subtitle">URL: </p>
+                    <h2 class="text-sm font-bold text-neon-pink uppercase tracking-widest mb-2">Resultados de generación
+                    </h2>
+                    <p class="text-3xl md:text-4xl font-bold text-white">Tus anuncios están listos</p>
+                    <p id="results-url-display" class="text-neon-cyan mt-2 font-medium opacity-80"></p>
                 </div>
-                <div class="header-actions">
-                    <button id="generate-more-btn" class="action-btn secondary">
-                        <span class="material-symbols-outlined">add</span>
-                        <span>Generar más</span>
-                    </button>
-                    <button id="reset-btn" class="action-btn">
-                        <span class="material-symbols-outlined">refresh</span>
-                        <span>Nueva búsqueda</span>
-                    </button>
-                </div>
+                <button id="reset-btn"
+                    class="flex items-center justify-center gap-2 text-white font-bold py-4 px-8 rounded-xl transition-all transform hover:scale-105 active:scale-95 bg-neon-pink shadow-[0_0_20px_rgba(255,0,128,0.4)]">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>INICIO</span>
+                </button>
             </div>
 
-            <div id="ads-gallery" class="ads-grid">
+            <!-- Ad Grid -->
+            <div id="ads-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Ads will be injected here -->
             </div>
+
+            <div class="mt-16 flex flex-col items-center gap-6">
+                <button id="generate-more-btn"
+                    class="flex items-center justify-center gap-2 text-black font-black py-6 px-12 rounded-2xl transition-all transform hover:scale-105 active:scale-95 bg-neon-cyan shadow-[0_0_15px_rgba(0,210,255,0.3)]">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>GENERAR MÁS VARIANTES</span>
+                </button>
+            </div>
         </section>
+
     </main>
 
-    <footer class="main-footer">
-        <div class="footer-content">
-            <div class="copyright">© 2026 Ad Generator AI. Diseñado para la Excelencia.</div>
-            <nav class="footer-nav">
-                <a href="#">Documentación</a>
-                <a href="#">Acceso API</a>
-                <a href="#">Soporte</a>
-            </nav>
+    <!-- Footer Stats -->
+    <footer class="mt-20 border-t border-slate-800 bg-black/40 py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex gap-12">
+                <div class="flex flex-col">
+                    <span class="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Resolución</span>
+                    <span class="text-white font-bold">1080x1080px</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Status</span>
+                    <span class="text-white font-bold">Optimizado por IA</span>
+                </div>
+            </div>
+            <div class="text-gray-500 text-sm">© 2026 Ad Generator AI. Todos los derechos reservados.</div>
+            <div class="flex items-center gap-2 text-slate-500 text-sm italic">
+                <span class="material-symbols-outlined text-neon-pink">verified</span>
+                <span>Optimizado para campañas de conversión</span>
+            </div>
         </div>
     </footer>
 
     <!-- Templates -->
     <template id="ad-card-template">
-        <div class="ad-card">
-            <div class="ad-image-container">
-                <div class="image-placeholder">
-                    <div class="shimmer"></div>
+        <div
+            class="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/50 backdrop-blur-sm transition-all hover:border-neon-cyan/50 hover:shadow-[0_0_30px_rgba(0,210,255,0.1)]">
+            <div class="aspect-square relative overflow-hidden bg-slate-800">
+                <div class="image-placeholder absolute inset-0 flex items-center justify-center">
+                    <div class="w-12 h-12 border-4 border-neon-cyan/20 border-t-neon-cyan rounded-full animate-spin">
+                    </div>
                 </div>
-                <img class="ad-img hidden" src="" alt="Ad visual">
-                <img class="product-overlay hidden" src="" alt="Product image">
-                <div class="ad-badge">AI Powered</div>
+                <img class="ad-img w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 hidden"
+                    src="" alt="Ad visual">
+                <img class="product-overlay absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/5 h-3/5 object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-10 hidden"
+                    src="" alt="Product overlay">
+                <div
+                    class="absolute inset-0 ad-card-overlay opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 z-20">
+                    <div class="flex gap-3">
+                        <button
+                            class="download-btn flex-1 bg-white text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-neon-cyan transition-colors">
+                            <span class="material-symbols-outlined text-xl">download</span>
+                            <span>Descargar</span>
+                        </button>
+                        <button
+                            class="copy-btn w-12 h-12 bg-slate-800/80 backdrop-blur-md text-white rounded-xl flex items-center justify-center hover:text-neon-cyan transition-colors">
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="ad-content">
-                <h3 class="ad-headline"></h3>
-                <p class="ad-caption"></p>
-                <div class="ad-concept">
-                    <span class="material-symbols-outlined">info</span>
+            <div class="p-6">
+                <h3 class="ad-headline text-xl font-bold mb-3 line-clamp-1"></h3>
+                <p class="ad-caption text-gray-400 text-sm mb-4 line-clamp-3"></p>
+                <div
+                    class="flex items-center gap-2 text-[10px] font-bold text-neon-cyan bg-neon-cyan/5 px-3 py-2 rounded-lg uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-sm">info</span>
                     <span class="concept-text"></span>
                 </div>
-            </div>
-            <div class="ad-actions">
-                <button class="ad-btn download-btn">
-                    <span class="material-symbols-outlined">download</span>
-                    <span>Descargar</span>
-                </button>
-                <button class="ad-btn copy-btn">
-                    <span class="material-symbols-outlined">content_copy</span>
-                </button>
             </div>
         </div>
     </template>
