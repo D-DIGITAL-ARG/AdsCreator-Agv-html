@@ -247,7 +247,7 @@ const api = {
     }
 };
 
-// --- REST OF THE UI LOGIC (Remains the same as previous scripthome.js) ---
+// --- REST OF THE UI LOGIC ---
 
 // State
 let stage = 'input';
@@ -266,6 +266,9 @@ const stages = {
 const urlForm = document.getElementById('url-form');
 const websiteUrlInput = document.getElementById('website-url');
 const progressBar = document.getElementById('progress-bar');
+const progressIndicator = document.getElementById('progress-indicator');
+const progressPercentage = document.getElementById('progress-percentage');
+const currentStepLabel = document.getElementById('current-step-label');
 const adsGallery = document.getElementById('ads-gallery');
 const urlDisplay = document.getElementById('results-url-display');
 const generateMoreBtn = document.getElementById('generate-more-btn');
@@ -274,27 +277,69 @@ const resetBtn = document.getElementById('reset-btn');
 // UI Transitions
 function setStage(newStage) {
     stage = newStage;
-    Object.values(stages).forEach(s => s.classList.remove('active'));
-    stages[newStage].classList.add('active');
+    Object.values(stages).forEach(s => {
+        if (s) s.classList.remove('active');
+    });
+    if (stages[newStage]) stages[newStage].classList.add('active');
     window.scrollTo(0, 0);
 }
 
 function updateProgress(step, total = 4) {
-    const percentage = ((step + 1) / total) * 100;
-    progressBar.style.width = `${percentage}%`;
+    const percentage = Math.round(((step + 1) / total) * 100);
+    if (progressBar) progressBar.style.width = `${percentage}%`;
+    if (progressIndicator) progressIndicator.style.width = `${percentage}%`;
+    if (progressPercentage) progressPercentage.textContent = `${percentage}%`;
 
-    document.querySelectorAll('.step').forEach((el, idx) => {
-        el.classList.remove('active', 'completed');
-        const statusEl = el.querySelector('.step-status');
+    const labels = [
+        "Analizando contenido del sitio",
+        "Estrategia de Marca",
+        "Copywriting Persuasivo",
+        "Visual Studio"
+    ];
+
+    if (currentStepLabel) currentStepLabel.textContent = labels[step] || "Procesando...";
+
+    document.querySelectorAll('.step-item').forEach((el, idx) => {
+        const statusIcon = el.querySelector('.step-icon-status');
+        const stateLabel = el.querySelector('.step-state');
+
+        el.classList.remove('opacity-100', 'opacity-40');
+        if (statusIcon) {
+            statusIcon.classList.remove('bg-neon-cyan/20', 'border-neon-cyan/30', 'text-neon-cyan', 'animate-spin', 'border-t-transparent', 'border-2', 'bg-neon-pink/20', 'border-neon-pink');
+            statusIcon.classList.add('bg-white/5', 'border-white/10');
+        }
 
         if (idx < step) {
-            el.classList.add('completed');
-            statusEl.textContent = 'Completado';
+            // Completed
+            el.classList.add('opacity-100');
+            if (statusIcon) {
+                statusIcon.innerHTML = '<span class="material-symbols-outlined text-xl">check_circle</span>';
+                statusIcon.classList.add('bg-neon-cyan/20', 'border-neon-cyan/30', 'text-neon-cyan');
+            }
+            if (stateLabel) {
+                stateLabel.textContent = 'Completado';
+                stateLabel.classList.remove('text-gray-500', 'animate-pulse', 'text-neon-pink');
+                stateLabel.classList.add('text-neon-cyan');
+            }
         } else if (idx === step) {
-            el.classList.add('active');
-            statusEl.textContent = 'En proceso...';
+            // Active
+            el.classList.add('opacity-100');
+            if (statusIcon) {
+                statusIcon.innerHTML = '';
+                statusIcon.classList.add('border-2', 'border-t-transparent', 'animate-spin', 'border-neon-pink', 'bg-neon-pink/20');
+            }
+            if (stateLabel) {
+                stateLabel.textContent = 'En curso...';
+                stateLabel.classList.remove('text-gray-500');
+                stateLabel.classList.add('text-neon-pink', 'animate-pulse');
+            }
         } else {
-            statusEl.textContent = 'Esperando...';
+            // Pending
+            el.classList.add('opacity-40');
+            if (stateLabel) {
+                stateLabel.textContent = 'Pendiente';
+                stateLabel.classList.add('text-gray-500');
+            }
         }
     });
 }
@@ -318,95 +363,99 @@ function hideManualInput() {
     manualImageUrlInput.value = '';
 }
 
-closeManualBtn.addEventListener('click', hideManualInput);
+if (closeManualBtn) closeManualBtn.addEventListener('click', hideManualInput);
+
+// Platform Selection
+const platformButtons = document.querySelectorAll('.platform-btn');
+platformButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.classList.toggle('bg-opacity-20');
+    });
+});
 
 // Logic: Analysis & Generation
-urlForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const url = websiteUrlInput.value;
-    if (!url) return;
+if (urlForm) {
+    urlForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = websiteUrlInput.value;
+        if (!url) return;
 
-    setStage('generating');
-    updateProgress(0);
+        setStage('generating');
+        updateProgress(0);
 
-    try {
-        websiteData = await api.analyze(url);
-        detectedImages = websiteData.detected_images || [];
-        selectedImage = detectedImages.length > 0 ? detectedImages[0] : null;
-        updateProgress(1);
+        try {
+            websiteData = await api.analyze(url);
+            detectedImages = websiteData.detected_images || [];
+            selectedImage = detectedImages.length > 0 ? detectedImages[0] : null;
+            updateProgress(1);
 
-        urlDisplay.textContent = `URL: ${url}`;
-        await startGeneration();
-    } catch (error) {
-        console.error(error);
-        setStage('input');
+            if (urlDisplay) urlDisplay.textContent = `URL: ${url}`;
+            await startGeneration();
+        } catch (error) {
+            console.error(error);
+            setStage('input');
 
-        // If it's a fetch/CORS error, offer manual input
-        if (error.message.includes('fetch') || error.message.includes('acceder') || error.message.includes('Proxy')) {
-            const retry = confirm(`${error.message}\n\n¿Quieres intentar ingresar el contenido manualmente?`);
-            if (retry) {
-                showManualInput();
+            if (error.message.includes('fetch') || error.message.includes('acceder') || error.message.includes('Proxy')) {
+                const retry = confirm(`${error.message}\n\n¿Quieres intentar ingresar el contenido manualmente?`);
+                if (retry) {
+                    showManualInput();
+                }
+            } else {
+                alert('Hubo un error al analizar el sitio: ' + error.message);
             }
-        } else {
-            alert('Hubo un error al analizar el sitio: ' + error.message);
         }
-    }
-});
+    });
+}
 
 // Manual Submission Logic
-submitManualBtn.addEventListener('click', async () => {
-    const text = manualTextArea.value.trim();
-    const manualImageUrl = manualImageUrlInput.value.trim();
+if (submitManualBtn) {
+    submitManualBtn.addEventListener('click', async () => {
+        const text = manualTextArea.value.trim();
+        const manualImageUrl = manualImageUrlInput.value.trim();
 
-    if (text.length < 50) {
-        alert('Por favor, ingresa un poco más de información para un mejor resultado.');
-        return;
-    }
+        if (text.length < 50) {
+            alert('Por favor, ingresa un poco más de información para un mejor resultado.');
+            return;
+        }
 
-    hideManualInput();
-    setStage('generating');
-    updateProgress(0);
+        hideManualInput();
+        setStage('generating');
+        updateProgress(0);
 
-    try {
-        // Prepare data directly using the text (skip scraping)
-        const systemPrompt = "Analiza este texto y entrégame un JSON válido con los detalles de marketing. RESPONDE SIEMPRE EN ESPAÑOL.";
-        const userPrompt = `Texto proporcionado: ${text.substring(0, 5000)}
-        
-        Devuelve JSON EN ESPAÑOL:
-        {
-          "brand_name": "string",
-          "products_services": ["string"],
-          "key_benefits": ["string"],
-          "target_audience": "string",
-          "brand_tone": "string",
-          "emotional_tone": "string",
-          "background_color_primary": "hex",
-          "background_color_secondary": "hex",
-          "button_colors": ["hex"],
-          "text_colors": ["hex"],
-          "accent_colors": ["hex"],
-          "overall_atmosphere": "string",
-          "imagery_type": "string",
-          "visual_concept": "string"
-        }`;
+        try {
+            const systemPrompt = "Analiza este texto y entrégame un JSON válido con los detalles de marketing. RESPONDE SIEMPRE EN ESPAÑOL.";
+            const userPrompt = `Texto proporcionado: ${text.substring(0, 5000)}
+            
+            Devuelve JSON EN ESPAÑOL:
+            {
+              "brand_name": "string",
+              "products_services": ["string"],
+              "key_benefits": ["string"],
+              "target_audience": "string",
+              "brand_tone": "string",
+              "emotional_tone": "string",
+              "visual_style": "string",
+              "main_promise": "string"
+            }`;
 
-        const rawResult = await api.callText(systemPrompt, userPrompt);
-        websiteData = api.safeJsonParse(rawResult);
+            const rawResult = await api.callText(systemPrompt, userPrompt);
+            websiteData = api.safeJsonParse(rawResult);
 
-        if (!websiteData) throw new Error("No se pudo analizar el texto manual");
+            if (!websiteData) throw new Error("No se pudo analizar el texto manual");
 
-        detectedImages = manualImageUrl ? [manualImageUrl] : [];
-        selectedImage = manualImageUrl || null;
-        updateProgress(1);
+            detectedImages = manualImageUrl ? [manualImageUrl] : [];
+            selectedImage = manualImageUrl || null;
+            updateProgress(1);
 
-        urlDisplay.textContent = `Análisis Manual`;
-        await startGeneration();
-    } catch (error) {
-        console.error(error);
-        alert('Fallo al procesar el texto: ' + error.message);
-        setStage('input');
-    }
-});
+            if (urlDisplay) urlDisplay.textContent = `Análisis Manual`;
+            await startGeneration();
+        } catch (error) {
+            console.error(error);
+            alert('Fallo al procesar el texto: ' + error.message);
+            setStage('input');
+        }
+    });
+}
 
 async function startGeneration() {
     updateProgress(2);
@@ -431,16 +480,12 @@ async function startGeneration() {
             let promptToUse = ad.image_prompt;
 
             if (i === 0 && selectedImage) {
-                // Variant 0: Klein generates a color-matched background; original image overlaid via CSS
                 console.log('🎨 Variant 0: Klein background + product overlay');
                 options.model = 'klein';
                 options.image = selectedImage;
-                promptToUse = `Abstract artistic background. Derive the color palette and mood from the reference image.
-                    Use the same dominant colors. Smooth gradients, elegant textures.
-                    NO OBJECTS. NO PEOPLE. NO TEXT. NO LOGOS. CLEAN BACKGROUND ONLY.
-                    1:1 format.`;
+                promptToUse = `Abstract artistic background. Derive the color palette and mood from the reference image. Use the same dominant colors. Smooth gradients, elegant textures. NO OBJECTS. NO PEOPLE. NO TEXT. NO LOGOS. CLEAN BACKGROUND ONLY. 1:1 format.`;
                 currentAds[i].visualConcept = 'Fondo premium + imagen del producto';
-                currentAds[i].productOverlay = selectedImage; // will be overlaid via CSS
+                currentAds[i].productOverlay = selectedImage;
                 renderAds();
                 try {
                     const result = await api.generateImage(promptToUse, options);
@@ -448,12 +493,11 @@ async function startGeneration() {
                     renderAds();
                 } catch (e) {
                     console.error('Error generating Klein background', e);
-                    currentAds[i].imageUrl = selectedImage; // fallback: just show the image
+                    currentAds[i].imageUrl = selectedImage;
                     currentAds[i].productOverlay = null;
                     renderAds();
                 }
             } else {
-                // Variants 1 and 2: Flux, no text
                 options.model = 'flux';
                 promptToUse = `${ad.image_prompt}. NO TEXT. NO LETTERS. NO WATERMARKS. Clean commercial photography only.`;
                 try {
@@ -461,7 +505,6 @@ async function startGeneration() {
                     currentAds[i].imageUrl = result.url;
                     renderAds();
                 } catch (e) {
-                    console.error('Error generating image', e);
                     currentAds[i].imageUrl = 'error';
                     renderAds();
                 }
@@ -473,78 +516,82 @@ async function startGeneration() {
     }
 }
 
-generateMoreBtn.addEventListener('click', async () => {
-    const currentCount = currentAds.length;
-    const existingHeadlines = currentAds.map(ad => ad.headline);
-    setStage('generating');
-    updateProgress(2);
+if (generateMoreBtn) {
+    generateMoreBtn.addEventListener('click', async () => {
+        const currentCount = currentAds.length;
+        const existingHeadlines = currentAds.map(ad => ad.headline);
+        setStage('generating');
+        updateProgress(2);
 
-    try {
-        const adCopy = await api.generateCopy(websiteData, 3, existingHeadlines);
-        updateProgress(3);
+        try {
+            const adCopy = await api.generateCopy(websiteData, 3, existingHeadlines);
+            updateProgress(3);
 
-        const newAdsBase = adCopy.ads.map(ad => ({
-            headline: ad.headline,
-            caption: ad.caption,
-            imageUrl: null,
-            visualConcept: ad.visual_concept,
-            imagePrompt: ad.image_prompt
-        }));
+            const newAdsBase = adCopy.ads.map(ad => ({
+                headline: ad.headline,
+                caption: ad.caption,
+                imageUrl: null,
+                visualConcept: ad.visual_concept,
+                imagePrompt: ad.image_prompt
+            }));
 
-        currentAds = [...currentAds, ...newAdsBase];
-        renderAds();
-        setStage('results');
+            currentAds = [...currentAds, ...newAdsBase];
+            renderAds();
+            setStage('results');
 
-        for (let i = 0; i < adCopy.ads.length; i++) {
-            const adIndex = currentCount + i;
-            const ad = adCopy.ads[i];
-            let options = { width: 1080, height: 1080, seed: Math.floor(Math.random() * 1000000) };
-            let promptToUse = ad.image_prompt;
+            for (let i = 0; i < adCopy.ads.length; i++) {
+                const adIndex = currentCount + i;
+                const ad = adCopy.ads[i];
+                let options = { width: 1080, height: 1080, seed: Math.floor(Math.random() * 1000000) };
+                let promptToUse = ad.image_prompt;
 
-            if (i === 0 && selectedImage) {
-                // Variant 0: Klein background + product overlay
-                options.model = 'klein';
-                options.image = selectedImage;
-                promptToUse = `Abstract artistic background. Derive the color palette and mood from the reference image. Use the same dominant colors. Smooth gradients, elegant textures. NO OBJECTS. NO PEOPLE. NO TEXT. NO LOGOS. CLEAN BACKGROUND ONLY. 1:1 format.`;
-                currentAds[adIndex].visualConcept = 'Fondo premium + imagen del producto';
-                currentAds[adIndex].productOverlay = selectedImage;
-                renderAds();
-                try {
-                    const result = await api.generateImage(promptToUse, options);
-                    currentAds[adIndex].imageUrl = result.url;
+                if (i === 0 && selectedImage) {
+                    options.model = 'klein';
+                    options.image = selectedImage;
+                    promptToUse = `Abstract artistic background. Derive the color palette and mood from the reference image. Use the same dominant colors. Smooth gradients, elegant textures. NO OBJECTS. NO PEOPLE. NO TEXT. NO LOGOS. CLEAN BACKGROUND ONLY. 1:1 format.`;
+                    currentAds[adIndex].visualConcept = 'Fondo premium + imagen del producto';
+                    currentAds[adIndex].productOverlay = selectedImage;
                     renderAds();
-                } catch (e) {
-                    currentAds[adIndex].imageUrl = selectedImage;
-                    currentAds[adIndex].productOverlay = null;
-                    renderAds();
-                }
-            } else {
-                options.model = 'flux';
-                promptToUse = `${ad.image_prompt}. NO TEXT. NO LETTERS. NO WATERMARKS. Clean commercial photography only.`;
-                try {
-                    const result = await api.generateImage(promptToUse, options);
-                    currentAds[adIndex].imageUrl = result.url;
-                    renderAds();
-                } catch (e) {
-                    currentAds[adIndex].imageUrl = 'error';
-                    renderAds();
+                    try {
+                        const result = await api.generateImage(promptToUse, options);
+                        currentAds[adIndex].imageUrl = result.url;
+                        renderAds();
+                    } catch (e) {
+                        currentAds[adIndex].imageUrl = selectedImage;
+                        currentAds[adIndex].productOverlay = null;
+                        renderAds();
+                    }
+                } else {
+                    options.model = 'flux';
+                    promptToUse = `${ad.image_prompt}. NO TEXT. NO LETTERS. NO WATERMARKS. Clean commercial photography only.`;
+                    try {
+                        const result = await api.generateImage(promptToUse, options);
+                        currentAds[adIndex].imageUrl = result.url;
+                        renderAds();
+                    } catch (e) {
+                        currentAds[adIndex].imageUrl = 'error';
+                        renderAds();
+                    }
                 }
             }
+        } catch (error) {
+            setStage('results');
         }
-    } catch (error) {
-        setStage('results');
-    }
-});
+    });
+}
 
-resetBtn.addEventListener('click', () => {
-    websiteUrlInput.value = '';
-    currentAds = [];
-    websiteData = null;
-    selectedImage = null;
-    setStage('input');
-});
+if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+        websiteUrlInput.value = '';
+        currentAds = [];
+        websiteData = null;
+        selectedImage = null;
+        setStage('input');
+    });
+}
 
 function renderAds() {
+    if (!adsGallery) return;
     adsGallery.innerHTML = '';
     const template = document.getElementById('ad-card-template');
 
@@ -558,7 +605,6 @@ function renderAds() {
             img.classList.remove('hidden');
             clone.querySelector('.image-placeholder').classList.add('hidden');
 
-            // If this ad has a product overlay, show it on top
             if (ad.productOverlay) {
                 const overlayImg = clone.querySelector('.product-overlay');
                 if (overlayImg) {
@@ -588,3 +634,4 @@ function renderAds() {
         adsGallery.appendChild(clone);
     });
 }
+
