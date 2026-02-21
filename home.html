@@ -124,6 +124,34 @@
         .hidden {
             display: none !important;
         }
+        .toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #000000;
+            color: #ffffff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 12px 24px;
+            position: fixed;
+            z-index: 9999;
+            left: 50%;
+            top: 200px;
+            transform: translateX(-50%) translateY(-200px);
+            opacity: 0;
+            transition: opacity 0.4s, transform 0.4s;
+            box-shadow: 0 10px 30px rgb(52, 119, 134);
+            border: 1px solid #56e3ff;
+            font-family: 'Sans', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Clase que se activa con JS */
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
     </style>
 </head>
 
@@ -416,8 +444,9 @@
             </div>
         </div>
     </template>
-
+    <div id="toast" class="toast">¡Texto copiado al portapapeles!</div>
     <script src="scripthome.js"></script>
 </body>
 
 </html>
+
