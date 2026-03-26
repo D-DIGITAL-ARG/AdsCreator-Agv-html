@@ -1,22 +1,18 @@
-// --- CONFIGURATION & API KEYS ---
-const POLLINATIONS_TEXT_KEY = 'sk_WuXoH4sQLvdflCtxqV7wmMoOAnbCSefH';
-const POLLINATIONS_IMAGE_KEY = 'sk_AgWtajLDsqOl3bF6Wu7lae6AhB87KQkM';
-const POLLINATIONS_KLEIN_KEY = 'sk_FCdjKYELAgTPjP9YxWC0NeND8Fe67t7B';
 
 const api = {
     async analyze(url) {
         console.log(`Analyzing website (Standalone): ${url}`);
 
         const proxyTemplates = [
-            (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}&cachebust=${Date.now()}`,
             (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+            (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}&cachebust=${Date.now()}`,
             (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
             (u) => `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(u)}`
         ];
 
         let html = null;
         let lastError = null;
-        const currentIdx = 1;
+        const currentIdx = 0;
         const searchOrder = [
             currentIdx,
             ...Array.from({ length: proxyTemplates.length }, (_, i) => i).filter(i => i !== currentIdx)
@@ -127,58 +123,76 @@ const api = {
                 }
 
                 console.log(`Width: ${item.Width}px | Height: ${item.Height}px | Ancho: ${item.Ancho}px | Alto: ${item.Alto}px | URL: ${item.url}`);
-
                 return src.startsWith('http');
-
             })
-            .map(item => item.url)
-            .slice(0, 15);
-            console.log(`Detected ${detectedImages.length} relevant images`);
+        .map(item => item.url)
+        .slice(0, 15);
+        console.log(`Detectadas ${detectedImages.length} imágenes relevantes`);
 
-//	const formattedImages = detectedImages.length > 0 
-//    	? detectedImages.map(url => `"${url}"`).join(', ') 
-//    	: "No se detectaron imágenes específicas.";
 
-// Use Pollinations to analyze the extracted text
-const systemPrompt = `Actúa como un analista experto en marketing digital, creador de contenido y copywriting senior. Tu objetivo es realizar un web scraping y análisis profundo de la URL proporcionada para extraer insumos y activos visuales que permitan crear anuncios de alto impacto.
-Analiza el sitio web ${url} y devuelve un objeto JSON detallado en español con la siguiente estructura y contenido:
+const analisisPrompt = `Actúa como un analista experto en marketing digital, creador de contenido y copywriting senior. Tu objetivo es realizar un web scraping y análisis profundo de la url proporcionada por el usuario para extraer insumos y activos visuales que permitan crear anuncios de alto impacto. Devuelve un objeto JSON con el análisis detallado en español, el JSON debe tener estrictamente la siguiente estructura y contenido:
 
 1. Identidad Visual:
-• Paleta de Colores: Identifica los colores principales, secundarios y de acento. Describe la psicología que transmiten (calma, urgencia, sofisticación, etc.).
-• Tipografía: Analiza el estilo de las fuentes (modernas, clásicas, ligeras, pesadas) y cómo jerarquizan la información.
-• Estilo de Imágenes: Determina el estilo de las imágenes y devuelve una o más de las siguientes opciones: minimalista, realista, ilustración 3d o Pixar.
-• Composición: Analiza la composición y si el contenido visual es el "freno del scroll".
-• Atmósfera General: Define si el diseño es editorial de alta gama, minimalista, saturado o funcional.
+• Paleta de Colores: Identifica los colores principales, secundarios y de acento. Describe la psicología que transmiten (calma, urgencia, sofisticación, motivación).
+• Tipografía: Analiza el estilo de las fuentes (modernas, clásicas, ligeras, pesadas, decorativas, elegantes).
+• Estilo de Imágenes: Identifica los estilos de las imágenes (acuarela, impresionismo, surrealismo, gótico, minimalismo, fotorrealismo, cyberpunk, ilustración infantil, renderizado 3D, caricatura, Pixar, Dreamworks).
+• Composición: Analiza la composición del contenido visual.
+• Atmósfera General: Analiza el diseño (editorial de alta gama, minimalista, saturado, funcional, alegre, divertido, educativo).
 
 2. Extracción y Análisis de Texto (Copywriting):
-• Contenido Textual: Extrae los titulares principales, descripción y llamados a la acción (CTA).
-• Propuesta de Valor: Identifica cuál es el beneficio principal que ofrecen (el "por qué" debería importarle al cliente) y no solo las características técnicas.
+• Contenido Textual: Extrae los títulos principales y llamadas a la acción (CTA).
+• Propuesta de Valor: Define el beneficio central único que ofrece la marca.
+• Beneficios: Traduce 3 características técnicas en beneficios reales usando el método ¿Y qué?.
 • Tono de Voz: Determina si la comunicación es cercana, profesional, inspiradora o urgente.
-• Fórmulas de Persuasión: Detecta si utilizan estructuras como PAS (Problema, Agitación, Solución) o ganchos emocionales.
+• Fórmulas de Persuasión: Detecta si utilizan estructuras como PAS (Problema, Agitación, Solución) u otras como AIDA.
 
 3. Buyer Persona y Estrategia:
-• Cliente Ideal: Basado en el lenguaje y el diseño, describe el perfil del usuario al que intentan atraer (sus puntos de dolor, deseos y metas).
+• Cliente Ideal: Descripción semificticia del cliente ideal basada en el texto del sitio.
+• Puntos de dolor: Lista de problemas o frustraciones que el sitio busca resolver.
+• Metas y deseos: Qué aspira lograr el cliente con este producto/servicio.
 • Etapa del Embudo: Identifica si el sitio está optimizado para la etapa de conciencia, consideración o conversión.
 
 Restricciones y Guías Adicionales:
-1. Precisión: No inventes datos; si una información no es detectable, indica "no detectado".
+1. Precisión: No inventes datos; si una información no es detectable, indica 'no detectado'.
 2. Claridad: El lenguaje debe ser profesional y directo, evitando redundancias.
-3. JSON Estricto: Asegurate de que la salida sea un JSON válido para que pueda ser procesado por mi aplicación sin errores de formato.
+3. IMPORTANTE SOBRE IMÁGENES: Para la sección 'Identidad Visual' y 'Estilo de Imágenes', limítate exclusivamente a analizar las URLs proporcionadas en la lista 'Imágenes Detectadas'. Ignora cualquier otra referencia visual del sitio que no esté en esa lista para evitar inconsistencias.
 4. Idioma: Toda la respuesta debe ser en español.
+5. JSON Estricto: Asegurate de que la salida sea un JSON válido para que pueda ser procesado por mi aplicación sin errores de formato.
+6. Responde ÚNICAMENTE con el objeto JSON, sin introducciones ni comentarios adicionales.
 
-Objetivo final: Registra toda esta información en una tabla detallada para que luego puedas actuar como un estratega de contenido y generar prompts efectivos para crear imágenes y copies de anuncios que mantengan una coherencia total con esta marca.`;
+Objetivo final: Que luego actúes como un estratega de contenido y utilices toda la información obtenida para generar prompts efectivos para crear imágenes y textos de anuncios que mantengan una coherencia total con este sitio web.`;
 
-	const rawText = doc.body.innerText.replace(/\s+/g, ' ').replace(/(menu|close)\b/gi, '').trim();
-	const bodyContent = rawText.lastIndexOf('.', 2000) !== -1 ? rawText.substring(0, rawText.lastIndexOf('.', 2000) + 1) : rawText.substring(0, 2000);
+const bodyClone = doc.body.cloneNode(true);
+const tagsToRemove = ['script', 'style', 'noscript', 'iframe', 'header', 'footer', 'nav', 'svg'];
+tagsToRemove.forEach(tag => {
+    bodyClone.querySelectorAll(tag).forEach(el => el.remove());
+});
 
-        const userPrompt = `Sitio: ${url}\n Título: ${title}\n Contenido: ${bodyContent}\n`;
-        console.log(`Arma systemPrompt de análisis: `, systemPrompt);
-        console.log(`Arma userPrompt de contenido: `, userPrompt);
+const rawText = bodyClone.innerText
+    .replace(/\s+/g, ' ') 
+    .replace(/(menu|close|abrir|cerrar|scroll)\b/gi, ' ')
+    .trim();
+
+const bodyContent = rawText.lastIndexOf('.', 2100) !== -1 
+    ? rawText.substring(0, rawText.lastIndexOf('.', 2100) + 1) 
+    : rawText.substring(0, 2100);
+
+const imagenesParaAnalizar = detectedImages.map((url, index) => `Imagen ${index + 1}: ${url}`).join('\n');
+
+const systemPrompt = `${analisisPrompt}`.trim().substring(0, 4500);
+const userPrompt = `URL del sitio: ${url}
+Imágenes Detectadas:
+${imagenesParaAnalizar}
+
+Contenido web: ${bodyContent}`.trim().substring(0, 3000);
+
+        console.log(`Arma Prompts de Análisis: `, systemPrompt, userPrompt);
+        console.log(`Envia solicitud para generar Analisis`);
 
         try {
             const rawResult = await this.callText(systemPrompt, userPrompt);
-            const json = this.safeJsonParse(rawResult);
-            console.log(`Obtiene respuesta de Gemini. `, rawResult);
+            const cleanResult = rawResult.replace(/```json|```/g, '').trim();
+            const json = this.safeJsonParse(cleanResult);
             if (!json) throw new Error("JSON Parse Error");
             json.contenido_web = bodyContent;
             json.imagenes_detectadas = detectedImages;
@@ -189,64 +203,131 @@ Objetivo final: Registra toda esta información en una tabla detallada para que 
         }
     },
 
-    async callText(systemPrompt, userPrompt) {
-        console.log(`Obtiene textos de Prompts. `);
-        try {
-            const combined = `${systemPrompt}\n${userPrompt}`.replace(/\s+/g, ' ').trim().substring(0, 8000);
-	    console.log(`Combina los Prompts. `);	
-            const encoded = encodeURIComponent(combined);
-            console.log(`Codifica los prompts a URI y envía fetch con Gemini. `);
-            const url = `https://gen.pollinations.ai/text/${encoded}?model=gemini-fast&json=true`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': '*/*',
-                    'Authorization': `Bearer ${POLLINATIONS_TEXT_KEY}`
-                }
-            });
+async callText(systemPrompt, userPrompt) {
+    console.log(`Obtiene textos de Prompts`);
+    
+    try {        
+        const GROQ_API_KEY = "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";
+        const url = "https://api.groq.com/openai/v1/chat/completions";
+        console.log("Fetch de analisis a Groq: ");
 
-            if (!response.ok) throw new Error(`API de Texto respondió con status ${response.status}`);
-            return await response.text();
-        } catch (e) {
-            console.error("Text API Error:", e);
-            throw new Error(`Fallo en conexión con Pollinations Text: ${e.message}`);
-        }
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
+		"Content-Type": "application/json"
+	            },
+            body: JSON.stringify({
+                model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                messages: [
+               {
+		role: "system", 
+		content: systemPrompt
+		},
+		{
+      		role: "user",
+      		content: userPrompt
+    		}
+		],
+                temperature: 0.3,
+                max_tokens: 2048,
+                top_p: 1,
+                stream: false,
+		stop: null
+            })
+        });
+	
+        if (!response.ok) throw new Error(`API de Texto respondió con status ${response.status}`);
+	const data = await response.json();
+	console.log("Respuesta de analisis de Groq: ", data);
+        return data.choices[0].message.content;
+
+    } catch (e) {
+        console.error("Error en el proceso de texto:", e.message);
+        throw new Error(`Fallo en conexión con API Text: ${e.message}`);
+    }
+},
+
+async callAds(systemPrompt, userPrompt, userImg) {
+    console.log(`Obtiene datos de Prompts`);
+    
+try {        
+     const GROQ_API_KEY = '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';
+     const url = 'https://api.groq.com/openai/v1/chat/completions';
+     console.log('Fetch de ads a Groq: ');
+
+const response = await fetch(url, {
+    method: 'POST', 
+    headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`, 
+        'Content-Type': 'application/json' 
     },
+    body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct', 
+        messages: [
+            {
+                role: 'system',
+                content: systemPrompt
+            },
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: userPrompt },
+                    { type: 'image_url', image_url: { url: userImg } }
+                ]
+            }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048
+    })
+});
 
+        if (!response.ok) throw new Error(`Error de API ${response.status}`);
+	const data = await response.json();
+	console.log("Respuesta de Ads de Groq: ", data);
+        return data.choices[0].message.content;
 
-    async generateCopy(websiteData, count = 3, existingAds = []) {
-        try {
-            const hasRefImage = !!selectedImage;
-//	    const imagenUrl = `https://elmonstruocomemiedos.weebly.com/uploads/1/5/2/5/152513751/editor/mock-00001_6.png`;
-//	    const estiloDetectado = websiteData.identidad_visual?.estilo_imagenes;
-            const existingContext = existingAds.length > 0
-                ? `\nAnuncios ya generados (EVITA REPETIR ESTOS ÁNGULOS Y TITULARES):\n${existingAds.map(ad => `- ${ad.headline}`).join('\n')}`
-                : '';
+    } catch (e) {
+        throw new Error(`Fallo en conexión con API Vision: ${e.message}`);
+    }
+},
 
-const systemPrompt = `Actua como un Director Creativo y Copywriter Senior experto en marketing de respuesta directa. Tu misión es transformar el análisis estratégico anterior (proporcionado en JSON) en ${count} variantes de anuncios de alto impacto diseñados para generar un freno del scroll inmediato.
+async generateCopy(websiteData, existingAds = []) {
+    try {
+const adsPrompt = `Actua como un Director Creativo y Copywriter Senior experto en marketing de respuesta directa. Tu misión es analizar la información proporcionada en el 'Análisis Previo' y crear 2 variantes de anuncios de alto impacto diseñados para generar un freno del scroll inmediato.
 
-Genera un objeto JSON estricto en español con ${count} variantes de anuncios en un array llamado "ads".
+Genera un objeto JSON estricto en español con 2 variantes de anuncios en un array llamado "ads".
+Responde ÚNICAMENTE con el objeto JSON, sin introducciones ni comentarios adicionales.
 Cada anuncio dentro del array "ads" debe tener EXACTAMENTE esta estructura:
 {
       "headline": "Título gancho (Hook) entre 4 y 6 palabras",
       "caption": "Cuerpo del texto principal (3-5 frases directas apuntando a puntos de dolor)",
       "visual_concept": "Breve descripción del concepto visual en español",
-      "image_prompt": "Prompt detallado para la generación de imagen. 
+      "image_prompt": "Prompt para la generación de imagen, que cumpla estrictamente con las siguientes reglas: 
 
-REGLAS PARA EL PROMPT DE IMAGEN:
+1. Deben estar escritos SIEMPRE EN INGLÉS.
 
-      - Para la PRIMER variante (Image-to-Image), utiliza EXACTAMENTE este texto: 'Image-to-image transformation. Recreate the main elements of the reference image using a style that is strictly coherent with the brand's visual identity. Create a commercial scene with optimized soft lighting and maintain the original color palette. Use a balanced wide shot with abundant negative space for marketing text overlay. High-impact scroll stopper for a premium landing page.'
-      
-      - Para las VARIANTES RESTANTES (Text-to-Image), redacta prompts detallados en inglés que repliquen el estilo y transmitan los conceptos del producto y las emociones detectadas en el análisis."
-    }`;
+2. Para la primer variante crea un prompt para una IA que genera image-to-image, el objetivo es que se identifiquen personajes, objetos o productos exactos presentes en la imagen y se INCORPOREN EN UNA NUEVA ESCENA, DIFERENTE Y CREATIVA. [AÑADE AQUÍ LA DESCRIPCIÓN DE LA NUEVA ESCENA]. Plano general equilibrado, amplio espacio negativo.
 
-        const userPrompt = `Datos de Marca: ${JSON.stringify(websiteData).substring(0, 7000)}`;
+3. Para la segunda variante crea un prompt para una IA que genera text-to-image, el objetivo es que se identifiquen productos o servicios exactos presentes en el 'Análisis Previo' proporcionado y generar una imagen publicitaria relacionada con el producto o servicio identificado. Sé creativo, no te limites solo a crear una imagen similar a las del sitio.
 
-        console.log(`Arma systemPrompt de anuncios: `, systemPrompt);
-        console.log(`Arma userPrompt de contenido: `, userPrompt);
-	console.log(`Enviando solicitud para generar copys`);
+4. Mantener coherencia con la paleta de colores y el estilo visual detectado mencionado en el 'Análisis Previo'"
+}`;
 
-    	const rawResult = await this.callText(systemPrompt, userPrompt);
-    	let json = this.safeJsonParse(rawResult);
+const existingContext = existingAds.length > 0 
+? `\nNo repitas esto: ${existingAds.map(ad => ad.headline).join(', ')}` : '';
+
+
+const systemPrompt = `${adsPrompt}`.trim().substring(0, 2500);
+const userPrompt = `Análisis Previo: ${JSON.stringify(websiteData)}`.trim().substring(0, 6000);
+const userImg = selectedImage;
+
+	console.log(`Arma Prompts para Ads: `, userImg, systemPrompt, userPrompt);
+	console.log(`Envia solicitud para generar copys Ads`);
+
+        const rawResult = await this.callAds(systemPrompt, userPrompt, userImg);
+        const cleanResult = rawResult.replace(/```json|```/g, '').trim();
+        let json = this.safeJsonParse(cleanResult);
 
             if (json) {
                 if (Array.isArray(json)) {
@@ -256,54 +337,71 @@ REGLAS PARA EL PROMPT DE IMAGEN:
                 } else if (!json.ads) {
                     const possibleArray = Object.values(json).find(v => Array.isArray(v));
                     if (possibleArray) json.ads = possibleArray;
-                    console.log(`Ads array`, possibleArray);
+                    console.log(`Ads array: `, possibleArray);
                 }
             }
 
-           console.log(`Copys y prompts generados correctamente con coherencia de marca`, json);
-           return json || { ads: [] };
-	} catch (e) {
-           throw new Error(`Fallo al generar copy publicitario: ${e.message}`);
+        console.log(`Copys y prompts generados correctamente con coherencia de marca`, json);
+	return json || { ads: [] };
+    	} catch (e) {
+        	throw new Error(`Fallo al generar copy: ${e.message}`);
+    	}
+},
+
+async generateImage(prompt, imagenOk) {
+	const API_FLOW_KEY = 'sk-dvxvsynljfyucsnwhqwouudqypmlhxvawpgdczlnsuxxmaud';
+	const url = 'https://api.siliconflow.com/v1/images/generations';
+
+	const headers = {
+        	'Authorization': `Bearer ${API_FLOW_KEY}`,
+        	'Content-Type': 'application/json'
+    	};
+
+	let bodyData = {
+        	prompt: prompt,
+        	image_size: '1024x1024',
+        	batch_size: 1,
+        	prompt_enhancement: false
+    	};
+
+	if (imagenOk) {
+		console.log(imagenOk);
+        	bodyData.model = 'black-forest-labs/FLUX.1-Kontext-dev';
+        	bodyData.image = imagenOk; 
+        	bodyData.strength = 0.2; 
+        } else {
+        	bodyData.model = 'black-forest-labs/FLUX.1-schnell';
+        	bodyData.num_inference_steps = 4;
         }
-    },
 
-    async generateImage(prompt, options = {}) {
-        try {
-            const { width = 1024, height = 1024, model = null, image = null, seed = null} = options;
-            const cleanPrompt = prompt.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 800);
-            const encodedPrompt = encodeURIComponent(cleanPrompt);
-            const finalSeed = seed || Math.floor(Math.random() * 1000000);
-            let url;
-            let apiKey = POLLINATIONS_IMAGE_KEY;
+try {
+        console.log(`Solicitando imagen Flow (${bodyData.model}) con prompt:`, prompt);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(bodyData)
+        });
 
-            if (image && model === 'klein') {
-                apiKey = POLLINATIONS_KLEIN_KEY;
-                const encodedRef = encodeURIComponent(image);
-                url = `https://gen.pollinations.ai/image/${encodedPrompt}?model=klein&width=${width}&height=${height}&image=${encodedRef}`;
-
-            } else {
-                url = `https://gen.pollinations.ai/image/${encodedPrompt}?width=${width}&height=${height}&seed=${finalSeed}&nologo=true&model=flux`;
-            }
-
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': '*/*',
-                    'Authorization': `Bearer ${apiKey}`
-                }
-            });
-
-            if (!response.ok) throw new Error(`API de Imagen respondió con status ${response.status}`);
-
-            const blob = await response.blob();
-            return { url: URL.createObjectURL(blob) };
-        } catch (e) {
-            console.error("Image API Error:", e);
-            throw new Error(`Fallo en conexión con Pollinations Image: ${e.message}`);
+        if (!response.ok) {
+            const errorDetail = await response.json();
+            throw new Error(`Error Flow: ${errorDetail.message || response.statusText}`);
         }
-    },
 
-    // Ayuda para obtener una imagen y convertirla a DataURL para CORS "limpio" para Canvas.
-    async getImageAsDataUrl(url) {
+        const data = await response.json();
+        const generatedImageUrl = data.images?.[0]?.url || data.data?.[0]?.url;
+
+        if (!generatedImageUrl) throw new Error("No se encontró la URL de la imagen");
+
+        return { url: generatedImageUrl };
+
+    } catch (err) {
+        console.error("Fallo total en la generación de imagen:", err.message);
+        return null;
+    }
+},
+
+async getImageAsDataUrl(url) {
         if (!url) return null;
         const proxies = [
             (u) => u, // Direct
@@ -339,7 +437,7 @@ REGLAS PARA EL PROMPT DE IMAGEN:
         return null;
     },
 
-    async composeAdImage(backgroundUrl, overlayUrl) {
+ async composeAdImage(backgroundUrl, overlayUrl) {
         const bgData = await this.getImageAsDataUrl(backgroundUrl);
         const overlayData = overlayUrl ? await this.getImageAsDataUrl(overlayUrl) : null;
 
@@ -347,19 +445,19 @@ REGLAS PARA EL PROMPT DE IMAGEN:
 
         return new Promise((resolve, reject) => {
             const canvas = document.createElement('canvas');
-            canvas.width = 1080;
-            canvas.height = 1080;
+            canvas.width = 1024;
+            canvas.height = 1024;
             const ctx = canvas.getContext('2d');
 
             const bgImg = new Image();
             bgImg.onload = () => {
-                ctx.drawImage(bgImg, 0, 0, 1080, 1080);
+                ctx.drawImage(bgImg, 0, 0, 1024, 1024);
 
                 if (overlayData) {
                     const overlayImg = new Image();
                     overlayImg.onload = () => {
                         // Logic: Maintain aspect ratio (object-contain)
-                        const targetSize = 1080 * 0.6;
+                        const targetSize = 1024 * 0.6;
                         let drawWidth, drawHeight;
                         const imgRatio = overlayImg.width / overlayImg.height;
 
@@ -371,8 +469,8 @@ REGLAS PARA EL PROMPT DE IMAGEN:
                             drawWidth = targetSize * imgRatio;
                         }
 
-                        const x = (1080 - drawWidth) / 2;
-                        const y = (1080 - drawHeight) / 2;
+                        const x = (1024 - drawWidth) / 2;
+                        const y = (1024 - drawHeight) / 2;
 
                         ctx.drawImage(overlayImg, x, y, drawWidth, drawHeight);
                         resolve(canvas.toDataURL('image/jpeg', 0.95));
@@ -391,7 +489,8 @@ REGLAS PARA EL PROMPT DE IMAGEN:
         });
     },
 
-    safeJsonParse(text) {
+safeJsonParse(text) {
+        console.log("Texto a PARSEAR: ", text);
         let content = text;
         try {
             const outer = JSON.parse(text);
@@ -407,8 +506,8 @@ REGLAS PARA EL PROMPT DE IMAGEN:
     }
 };
 
-// --- REST OF THE UI LOGIC ---
 
+// --- REST OF THE UI LOGIC ---
 // State
 let stage = 'input';
 let websiteData = null;
@@ -533,49 +632,6 @@ function hideManualInput() {
 
 if (closeManualBtn) closeManualBtn.addEventListener('click', hideManualInput);
 
-// Platform Selection
-const platformButtons = document.querySelectorAll('.platform-btn');
-platformButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        btn.classList.toggle('bg-opacity-20');
-    });
-});
-
-// Logic: Analysis & Generation
-if (urlForm) {
-    urlForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const url = websiteUrlInput.value;
-        if (!url) return;
-
-        setStage('generating');
-        updateProgress(0);
-
-        try {
-            websiteData = await api.analyze(url);
-            detectedImages = websiteData.imagenes_detectadas || [];
-            selectedImageIndex = 0;
-            selectedImage = detectedImages.length > 0 ? detectedImages[0] : null;
-            updateProgress(1);
-
-            if (urlDisplay) urlDisplay.textContent = `URL: ${url}`;
-            await startGeneration();
-        } catch (error) {
-            console.error(error);
-            setStage('input');
-
-            if (error.message.includes('fetch') || error.message.includes('acceder') || error.message.includes('Proxy')) {
-                const retry = confirm(`${error.message}\n\n¿Quieres intentar ingresar el contenido manualmente?`);
-                if (retry) {
-                    showManualInput();
-                }
-            } else {
-                alert('Hubo un error al analizar el sitio: ' + error.message);
-            }
-        }
-    });
-}
-
 // Manual Submission Logic
 if (submitManualBtn) {
     submitManualBtn.addEventListener('click', async () => {
@@ -607,7 +663,7 @@ if (submitManualBtn) {
               "main_promise": "string"
             }`;
 
-            const rawResult = await api.callText(systemPrompt, userPrompt);
+            const rawResult = await api.callText(systemPrompt);
             websiteData = api.safeJsonParse(rawResult);
             console.log(`Datos del sitio`, websiteData);
 
@@ -627,79 +683,103 @@ if (submitManualBtn) {
     });
 }
 
+// Logic: Analysis & Generation
+if (urlForm) {
+    urlForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = websiteUrlInput.value;
+        if (!url) return;
+
+        setStage('generating');
+        updateProgress(0);
+
+        try {
+            websiteData = await api.analyze(url);
+            detectedImages = websiteData.imagenes_detectadas || [];
+            selectedImageIndex = 0;
+            selectedImage = detectedImages.length > 0 ? detectedImages[0] : null;
+            updateProgress(1);
+
+            if (urlDisplay) urlDisplay.textContent = `URL: ${url}`;
+            await startGeneration();
+
+            } catch (error) {
+            console.error(error);
+            setStage('input');
+
+            if (error.message.includes('fetch') || error.message.includes('acceder') || error.message.includes('Proxy')) {
+                const retry = confirm(`${error.message}\n\n¿Quieres intentar ingresar el contenido manualmente?`);
+                if (retry) {
+                    showManualInput();
+                }
+            } else {
+                alert('Hubo un error al analizar el sitio: ' + error.message);
+            }
+        }
+    });
+}
+
 async function startGeneration() {
     updateProgress(2);
     try {
-        const adCopy = await api.generateCopy(websiteData, 3);
+        const adCopy = await api.generateCopy(websiteData, 2);
         updateProgress(3);
 
         currentAds = (adCopy?.ads || []).map(ad => ({
             headline: ad.headline || ad.titulo || "Título no generado",
             caption: ad.caption || ad.texto || "Texto no generado",
             imageUrl: null,
+            visualConcept: ad.visual_concept || ad.concepto || "",
             imagePrompt: ad.image_prompt || ad.prompt || ""
         }));
 
         // Create a list of promises for image generation
         const generationPromises = currentAds.map(async (ad, i) => {
-            let options = { width: 1024, height: 1024, seed: Math.floor(Math.random() * 1000000) };
             let promptToUse = ad.imagePrompt;
-            if (i === 0 && selectedImage) {
-                options.model = 'klein';
-                options.image = selectedImage;
-                try {
-                    const result = await api.generateImage(promptToUse, options);
+	    let imagenRef = selectedImage;
+            
+        try {
+		if (i < 1 && imagenRef) {
+                    const result = await api.generateImage(promptToUse, imagenRef);
                     ad.imageUrl = result.url;
-                    console.log(`Lee y ejecuta Prompt klein: `, promptToUse);
-                } catch (e) {
-                    console.error('Error generating Klein background', e);
-                    ad.imageUrl = selectedImage;
+		} else {
+                    const result = await api.generateImage(promptToUse);
+                    ad.imageUrl = result.url;
+                }
+         } catch (e) {
+                    console.error(`Error en generación de imagen ${i}:`, e);
+                    ad.imageUrl = imagenRef;
                     ad.productOverlay = null;
                 }
-            } else {
-                options.model = 'flux';
-                promptToUse = `${ad.imagePrompt}`;
-                try {
-                    const result = await api.generateImage(promptToUse, options);
-                    ad.imageUrl = result.url;
-                    console.log(`Lee y ejecuta Prompt flux: `, promptToUse);
-                } catch (e) {
-                    ad.imageUrl = 'error';
-                }
-            }
-        });
+            });
 
-        // Wait for ALL images to finish generating
         await Promise.all(generationPromises);
-
-        // Final progress update
         updateProgress(4);
-
-        // Brief delay for the user to see the "Completed" state
         await new Promise(r => setTimeout(r, 800));
-
         renderAds();
         setStage('results');
-    } catch (error) {
-        console.error(error);
-        setStage('results');
-    }
+
+   	} catch (error) {
+        	console.error("Error en startGeneration:", error);
+		alert("No se pudieron generar los anuncios. Revisa la consola.");
+        	setStage('input');
+    	}
 }
 
 if (generateMoreBtn) {
-    generateMoreBtn.addEventListener('click', async () => {
+    	generateMoreBtn.addEventListener('click', async () => {
         setStage('generating');
         updateProgress(0);
 
         if (detectedImages.length > 0) {
             selectedImageIndex = (selectedImageIndex + 1) % detectedImages.length;
             selectedImage = detectedImages[selectedImageIndex];
-            console.log(`Ciclado de imagen para variante Klein: Index ${selectedImageIndex}`, selectedImage);
+            console.log(`Variante de Imagen: Index ${selectedImageIndex}`, selectedImage);
         }
 
         try {
             updateProgress(2);
-            const adCopy = await api.generateCopy(websiteData, 3, currentAds);
+            const adCopy = await api.generateCopy(websiteData, 2, currentAds);
             updateProgress(3);
 
             const newAdsBase = (adCopy?.ads || []).map(ad => ({
@@ -712,44 +792,37 @@ if (generateMoreBtn) {
 
             // Generate images for new ads
             const newGenerationPromises = newAdsBase.map(async (ad, i) => {
-                let options = { width: 1024, height: 1024, seed: Math.floor(Math.random() * 1000000) };
-                let promptToUse = ad.imagePrompt;
-                if (i === 0 && selectedImage) {
-                    options.model = 'klein';
-                    options.image = selectedImage;
+            let promptToUse = ad.imagePrompt;
+  	    let imagenRef = selectedImage;
 
-                    try {
-                        const result = await api.generateImage(promptToUse, options);
-                        ad.imageUrl = result.url;
-                        console.log(`Prompt variante klein: `, promptToUse);
-                    } catch (e) {
-                        ad.imageUrl = selectedImage;
-                        ad.productOverlay = null;
-                    }
-                } else {
-                    options.model = 'flux';
-                    promptToUse = `${ad.imagePrompt}`;
-                    console.log(`Promt variante flux: `, promptToUse);
-                    try {
-                        const result = await api.generateImage(promptToUse, options);
-                        ad.imageUrl = result.url;
-                    } catch (e) {
-                        ad.imageUrl = 'error';
-                    }
+            try {
+                if (i < 1 && imagenRef) {
+                     const result = await api.generateImage(promptToUse, imagenRef);
+                     ad.imageUrl = result.url;
+                     console.log(`Prompt de Variante Img-Img: `, promptToUse);
+		 } else {
+                     const result = await api.generateImage(promptToUse);
+                     ad.imageUrl = result.url;
+                     console.log(`Prompt de Variante Tex-Img: `, promptToUse);
+                 }
+             } catch (e) {
+                    console.error(`Error en generación de imagen ${i}:`, e);
+                    ad.imageUrl = imagenRef;
+                    ad.productOverlay = null;
                 }
             });
 
             await Promise.all(newGenerationPromises);
-
             currentAds = [...currentAds, ...newAdsBase];
-
             updateProgress(4);
             await new Promise(r => setTimeout(r, 800));
-
             renderAds();
             setStage('results');
+
         } catch (error) {
-            setStage('results');
+        	console.error("Error en startGeneration:", error);
+		alert("No se pudieron generar los anuncios. Revisa la consola.");
+        	setStage('input');
         }
     });
 }
@@ -790,7 +863,6 @@ function renderAds() {
 
         clone.querySelector('.ad-headline').textContent = ad.headline;
         clone.querySelector('.ad-caption').textContent = ad.caption;
-        clone.querySelector('.concept-text').textContent = ad.visualConcept;
 
         clone.querySelector('.copy-btn').addEventListener('click', () => {
             navigator.clipboard.writeText(`${ad.headline}\n\n${ad.caption}`);
@@ -806,7 +878,7 @@ function renderAds() {
 
             const btn = e.currentTarget;
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span><span>		Procesando...</span>';
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span><span>Procesando...</span>';
             btn.disabled = true;
 
             try {
