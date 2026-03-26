@@ -207,7 +207,7 @@ async callText(systemPrompt, userPrompt) {
     console.log(`Obtiene textos de Prompts`);
     
     try {        
-        const GROQ_API_KEY = "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";
+        const GROQ_API_KEY = '';
         const url = "https://api.groq.com/openai/v1/chat/completions";
         console.log("Fetch de analisis a Groq: ");
 
@@ -252,7 +252,7 @@ async callAds(systemPrompt, userPrompt, userImg) {
     console.log(`Obtiene datos de Prompts`);
     
 try {        
-     const GROQ_API_KEY = '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';
+     const GROQ_API_KEY = '';
      const url = 'https://api.groq.com/openai/v1/chat/completions';
      console.log('Fetch de ads a Groq: ');
 
@@ -349,7 +349,7 @@ const userImg = selectedImage;
 },
 
 async generateImage(prompt, imagenOk) {
-	const API_FLOW_KEY = 'sk-dvxvsynljfyucsnwhqwouudqypmlhxvawpgdczlnsuxxmaud';
+	const API_FLOW_KEY = '';
 	const url = 'https://api.siliconflow.com/v1/images/generations';
 
 	const headers = {
