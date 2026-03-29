@@ -1,3 +1,6 @@
+const GROQ_API_KEY = typeof CONFIG !== 'undefined' ? CONFIG.GROQ_API_KEY : '';
+const FLOW_API_KEY = typeof CONFIG !== 'undefined' ? CONFIG.FLOW_API_KEY : '';
+const HUGGING_API_KEY = typeof CONFIG !== 'undefined' ? CONFIG.HUGGING_API_KEY : '';
 
 const api = {
     async analyze(url) {
